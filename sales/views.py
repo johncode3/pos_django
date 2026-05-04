@@ -101,12 +101,10 @@ def add_item(request, pk):
                 item = order.items.get(pk=item_id)
             except OrderItem.DoesNotExist:
                 messages.error(request, 'Item not found.')
-        discount_form = DiscountForm()
+                return redirect('add_item', pk=order.pk)
 
-    return render(request, 'sales/add_order.html', {
-        'order':     order,
-        'item_form': item_form,
-        'discount_form': discountm.product
+            # restore stock
+            product = item.product
             product.stock = (product.stock or 0) + item.quantity
             product.save()
             item.delete()
@@ -128,10 +126,12 @@ def add_item(request, pk):
                     messages.error(request, f"{error}")
     else:
         item_form = OrderItemForm()
+        discount_form = DiscountForm()
 
     return render(request, 'sales/add_order.html', {
         'order':     order,
         'item_form': item_form,
+        'discount_form': discount_form,
         'items':     order.items.select_related('product'),
     })
 
