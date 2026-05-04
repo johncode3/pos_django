@@ -63,6 +63,9 @@ def add_item(request, pk):
         return redirect('order_detail', pk=order.pk)
 
     if request.method == 'POST':
+        item_form = OrderItemForm()
+        discount_form = DiscountForm()
+        
         # Apply or update discount
         if 'apply_discount' in request.POST:
             discount_form = DiscountForm(request.POST)
