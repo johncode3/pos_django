@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-v3$+3e+4m06b3ffp7z4o58!#9*b6&)#nj)m52(nhlx!s5r-3@n'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['kakkada03.pythonanywhere.com', '127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -115,7 +115,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files (user-uploaded files)
 MEDIA_URL = '/media/'
@@ -126,6 +127,8 @@ LOGIN_REDIRECT_URL = '/sales/products/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://',
-    'http://'
+    'https://kakkada03.pythonanywhere.com',
+    'http://kakkada03.pythonanywhere.com'
 ]
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
