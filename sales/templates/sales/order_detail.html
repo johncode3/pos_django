@@ -1,0 +1,93 @@
+<!-- sales/templates/sales/order_detail.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order #{{ order.pk }} — Details</title>
+    <style>
+        body{font-family:Segoe UI,Arial,sans-serif;background:#f8fafc;color:#1a202c;padding:28px}
+        .card{max-width:900px;margin:0 auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 20px 50px rgba(2,6,23,0.06)}
+        .meta{display:flex;justify-content:space-between;align-items:center}
+        .badge{padding:6px 12px;border-radius:14px;font-weight:700}
+        .status-paid{background:#def7ec;color:#03543f}
+        .status-open{background:#fef3c7;color:#92400e}
+        .status-cancelled{background:#f3f4f6;color:#374151;text-decoration:line-through}
+        table{width:100%;border-collapse:collapse;margin-top:14px}
+        th{background:#f1f5f9;padding:10px;text-align:left}
+        td{padding:10px;border-bottom:1px solid #edf2f7}
+        .price{font-weight:800;color:#2f855a}
+        .actions{display:flex;gap:12px;margin-top:14px}
+        .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
+        .btn.cancel{background:#e53e3e;color:#fff}
+        .btn.paid{background:#38a169;color:#fff}
+        .back{color:#3182ce;text-decoration:none;font-weight:700}
+    </style>
+</head>
+<body>
+    <div class="card">
+        {% if messages %}
+        <div style="margin-bottom:12px">
+            {% for message in messages %}
+                <div style="padding:8px 12px;border-radius:8px;background:#fff3bf;color:#92400e;font-weight:700">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="meta">
+            <div>
+                <h2>Order #{{ order.pk }}</h2>
+                <div>Cashier: <strong>{{ order.cashier }}</strong></div>
+                <div style="color:#718096;font-size:0.95em">Placed: {{ order.created_at|date:'d M Y, H:i' }}</div>
+            </div>
+            <div>
+                <div class="badge status-{{ order.status }}">{{ order.get_status_display }}</div>
+                <div style="text-align:right;margin-top:10px;font-size:1.1em" class="price">Total: ${{ order.total|floatformat:2 }}</div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th></tr>
+            </thead>
+            <tbody>
+            {% for item in items %}
+                <tr>
+                    <td><a href="{% url 'product_detail' item.product.pk %}" style="color:#1a202c;font-weight:700;text-decoration:none">{{ item.product.name }}</a></td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.unit_price }}</td>
+                    <td>${{ item.subtotal }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" style="color:#718096;text-align:center;padding:24px">No items</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="actions">
+            <a href="{% url 'order_list' %}" class="back">← Back to orders</a>
+            {% if order.status != 'cancelled' %}
+                {% if order.status == 'open' %}
+                    <form method="post" action="{% url 'change_order_status' order.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="on_hold">
+                        <button class="btn" type="submit">Put On Hold</button>
+                    </form>
+                {% endif %}
+
+                {% if order.status == 'open' or order.status == 'on_hold' %}
+                    <form method="post" action="{% url 'change_order_status' order.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="paid">
+                        <button class="btn paid" type="submit">Mark As Paid</button>
+                    </form>
+                {% endif %}
+
+                <form method="post" action="{% url 'cancel_order' order.pk %}">
+                    {% csrf_token %}
+                    <button class="btn cancel" type="submit">Cancel Order</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

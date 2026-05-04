@@ -1,0 +1,176 @@
+<!-- sales/templates/sales/add_order.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order #{{ order.pk }}</title>
+    <style>
+        body  { font-family: Inter, Arial, sans-serif; max-width: 960px; margin: 32px auto; background: #f7fafc; padding: 0 20px; color:#1a202c }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 14px rgba(2,6,23,0.06); margin-bottom: 20px; }
+        th { background: linear-gradient(90deg,#2b6cb0,#2a72b9); color: white; padding: 12px 16px; text-align: left; }
+        td { padding: 12px 16px; border-bottom: 1px solid #edf2f7; }
+        .total { font-size: 1.25em; font-weight: 700; color: #2f855a; margin-bottom: 18px }
+
+        /* Add-item form */
+        form.add  { background: white; padding: 18px; border-radius: 10px; box-shadow: 0 4px 14px rgba(2,6,23,0.05); display: flex; gap: 12px; align-items: flex-end; flex-wrap:wrap }
+        form.add > div { min-width: 160px }
+        form.add label { font-weight: 600; display: block; margin-bottom: 6px; font-size:0.95em }
+        form.add select, form.add input { padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.98em; background: #fff }
+
+        /* Buttons (shared) */
+        .btn { display: inline-flex; align-items: center; gap:8px; padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; color: #fff; box-shadow: 0 6px 18px rgba(11,22,39,0.06); transition: transform .08s ease, box-shadow .12s ease, opacity .12s ease }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 12px 36px rgba(11,22,39,0.08) }
+        .btn:active { transform: translateY(-1px) }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none }
+
+        .btn-add  { background: linear-gradient(180deg,#2b6cb0,#1f6aa8) }
+        .btn-paid { background: linear-gradient(180deg,#2f855a,#276749) }
+        .btn-hold { background: linear-gradient(180deg,#f6ad55,#dd6b20) }
+        .btn-cancel { background: linear-gradient(180deg,#e53e3e,#c53030) }
+
+        /* Action group for final buttons */
+        .actions { display:flex; gap:12px; align-items:center; margin-top:14px }
+        .actions form { margin:0 }
+
+        .auto-hide-message {
+            transition: opacity 0.4s ease, transform 0.4s ease, max-height 0.4s ease, margin 0.4s ease, padding 0.4s ease;
+            overflow: hidden;
+        }
+
+        .auto-hide-message.is-hiding {
+            opacity: 0;
+            transform: translateY(-8px);
+            max-height: 0;
+            margin-bottom: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        @media (max-width:640px){
+            form.add { flex-direction:column; align-items:stretch }
+            form.add > div { width:100% }
+        }
+    </style>
+</head>
+<body>
+    <h1>Order #{{ order.pk }} — Adding Items</h1>
+    <p>Cashier: <strong>{{ order.cashier }}</strong></p>
+
+    <!-- Messages & Errors Display -->
+    {% if messages %}
+    <div id="flash-messages" style="margin-bottom: 20px;">
+        {% for message in messages %}
+        <div class="auto-hide-message" style="padding: 14px 16px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid {% if message.tags %}#e53e3e{% else %}#3182ce{% endif %}; background: {% if message.tags %}#fff5f5{% else %}#ebf8ff{% endif %}; color: #1a202c; font-weight: 500;">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Form Errors Display -->
+    {% if item_form.non_field_errors %}
+    <div id="form-error-message" class="auto-hide-message" style="padding: 14px 16px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #e53e3e; background: #fff5f5; color: #1a202c;">
+        <strong style="color: #c53030;">⚠ Error:</strong>
+        {% for error in item_form.non_field_errors %}
+        <div>{{ error }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Current items table -->
+    <table>
+        <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th><th style="width:120px">Action</th></tr></thead>
+        <tbody>
+        {% for item in items %}
+        <tr>
+            <td>{{ item.product.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ item.unit_price }}</td>
+            <td>${{ item.subtotal }}</td>
+            <td>
+                {% if order.status == 'open' %}
+                <form method="post" style="display:inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="remove_item" value="{{ item.pk }}">
+                    <button class="btn" type="submit" style="background:linear-gradient(180deg,#e53e3e,#c53030);padding:6px 10px;border-radius:8px;font-weight:700">✖ Remove</button>
+                </form>
+                {% else %}
+                    <span style="color:#718096;font-weight:600">—</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" style="color:#888;text-align:center">No items yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <p class="total">Order Total: ${{ order.total }}</p>
+
+    <!-- Add item form -->
+    <form class="add" method="post">
+        {% csrf_token %}
+        {% for field in item_form %}
+        <div>
+            <label>{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <div style="color: #e53e3e; font-size: 0.9em; margin-top: 4px; font-weight: 500;">
+                {% for error in field.errors %}
+                <div>⚠ {{ error }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        <button class="btn btn-add" type="submit">＋ Add Item</button>
+    </form>
+
+    <div class="actions">
+        <!-- Put On Hold -->
+        <form method="post" action="{% url 'change_order_status' order.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="on_hold">
+            <button class="btn btn-hold" type="submit">⏸ Put On Hold</button>
+        </form>
+        <!-- Mark Paid -->
+        <form method="post">
+            {% csrf_token %}
+            {% if items %}
+                <button class="btn btn-paid" name="mark_paid" type="submit">✔ Mark Order as Paid</button>
+            {% else %}
+                <button class="btn btn-paid" name="mark_paid" type="submit" disabled title="Add items before marking paid">✔ Mark Order as Paid</button>
+            {% endif %}
+        </form>
+
+        <!-- Cancel Order -->
+        <form method="post" action="{% url 'cancel_order' pk=order.pk %}">
+            {% csrf_token %}
+            <button class="btn btn-cancel" type="submit">✖ Cancel Order</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var messageContainers = [
+                document.getElementById('flash-messages'),
+                document.getElementById('form-error-message')
+            ];
+
+            setTimeout(function () {
+                messageContainers.forEach(function (container) {
+                    if (!container) {
+                        return;
+                    }
+
+                    container.classList.add('is-hiding');
+                    setTimeout(function () {
+                        if (container && container.parentNode) {
+                            container.parentNode.removeChild(container);
+                        }
+                    }, 400);
+                });
+            }, 10000);
+        });
+    </script>
+</body>
+</html>

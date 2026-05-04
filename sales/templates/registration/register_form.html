@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Register</title>
+    <style>
+        :root {
+            --bg: #f5f7fb;
+            --card: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --danger: #dc2626;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: radial-gradient(circle at 20% 0%, #dbeafe 0%, var(--bg) 50%);
+            font-family: "Segoe UI", sans-serif;
+            color: var(--text);
+            padding: 20px;
+        }
+
+        .register-card {
+            width: 100%;
+            max-width: 460px;
+            background: var(--card);
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 12px 30px rgba(31, 41, 55, 0.15);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 1.7rem;
+        }
+
+        .subtitle {
+            margin: 0 0 22px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 0.98rem;
+        }
+
+        .form-input:focus {
+            outline: 2px solid #bfdbfe;
+            border-color: var(--accent);
+        }
+
+        .errorlist {
+            color: var(--danger);
+            margin: 6px 0 0;
+            padding-left: 18px;
+            font-size: 0.88rem;
+        }
+
+        .btn {
+            width: 100%;
+            border: 0;
+            border-radius: 10px;
+            padding: 12px;
+            background: var(--accent);
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .helper-links {
+            margin-top: 16px;
+            text-align: center;
+            font-size: 0.93rem;
+            color: var(--muted);
+        }
+
+        .helper-links a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <main class="register-card">
+        <h1>Create POS Account</h1>
+        <p class="subtitle">Register a new cashier account, then sign in to start selling.</p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                {{ form.non_field_errors }}
+            {% endif %}
+
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn">Create Account</button>
+        </form>
+
+        <div class="helper-links">
+            Already have an account?
+            <a href="{% url 'login' %}">Log in</a>
+        </div>
+    </main>
+</body>
+</html>

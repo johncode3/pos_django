@@ -1,0 +1,142 @@
+<!-- sales/templates/sales/order_list.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧾 POS — Sales History</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --primary: #3182ce;
+            --text-dark: #1a202c;
+            --success: #38a169;
+            --warning: #dd6b20;
+            --danger: #e53e3e;
+            --info: #805ad5;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; max-width: 1000px; margin: 40px auto; padding: 0 20px; background: var(--bg); color: var(--text-dark); }
+        h1 { display: flex; align-items: center; gap: 10px; }
+
+        /* Clean Nav */
+        nav { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        nav a { margin-right: 20px; text-decoration: none; color: var(--primary); font-weight: 600; }
+
+        /* The Table Container */
+        .table-container { 
+            background: white; 
+            border-radius: 15px; 
+            overflow: hidden; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+            border: 1px solid #e2e8f0;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f1f5f9; color: #64748b; font-size: 0.85em; text-transform: uppercase; letter-spacing: 1px; padding: 15px 20px; text-align: left; }
+        td { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; transition: 0.2s; }
+        
+        /* Row Hover Effect */
+        tr:hover td { background: #f8fafc; cursor: pointer; }
+
+        /* Status Badge Logic - Infinite Aura */
+        .badge { 
+            padding: 5px 12px; 
+            border-radius: 20px; 
+            font-size: 0.8em; 
+            font-weight: bold; 
+            display: inline-block;
+        }
+        .status-paid      { background: #def7ec; color: #03543f; }
+        .status-open      { background: #fef3c7; color: #92400e; }
+        .status-on_hold   { background: #fef9c3; color: #744210; }
+        .status-refunded  { background: #ebf4ff; color: #1e429f; }
+        .status-cancelled { background: #da8a8ab6; color: #a71010; text-decoration: line-through; }
+
+        .price-text { font-weight: 800; color: var(--success); font-family: monospace; font-size: 1.1em; }
+        .item-count { background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 6px; font-size: 0.9em; }
+        
+        .empty-state { text-align: center; padding: 40px; color: #a0aec0; }
+        /* The New Order Button Vibe 🚀 */
+        .btn-new-order {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(49, 130, 206, 0.2);
+            transition: 0.2s;
+            display: inline-block;
+        }
+        .btn-new-order:hover {
+            background-color: #2b6cb0;
+            transform: translateY(-2px); /* Makes it float when you hover! */
+        }
+    </style>
+</head>
+<body>
+    <h1>🧾 Sales History</h1>
+    
+    <nav>
+        <a href="{% url 'product_list' %}">Inventory</a>
+        <a href="{% url 'order_list' %}">Sales history</a>
+        <a href="{% url 'my_orders' %}">My Orders</a>
+        <a href="/admin/">Admin Dashboard</a>
+    </nav>
+
+    <!-- Header Row: Count on the left, Button on the right -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <p style="color: #718096; margin: 0;">
+            Tracking <b>{{ orders.count }}</b> total orders in the system
+        </p>
+        
+        <!-- The Magic Link! Notice we use the Django URL tag -->
+        <a href="{% url 'create_order' %}" class="btn-new-order">
+            + New Order 
+        </a>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <!-- <th>Order ID</th> -->
+                    <th>Cashier</th>
+                    <th>Timestamp</th>
+                    <th>Status</th>
+                    <th>Total Revenue</th>
+                    <th>Items</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for order in orders %}
+                <tr>
+                    <!-- <td><code style="color: var(--primary);">#{{ order.pk }}</code></td> -->
+                    <td><b>{{ order.cashier }}</b></td>
+                    <td style="color: #718096;">{{ order.created_at|date:"d M Y, H:i" }}</td>
+                    <td>
+                        <!-- Dynamic Badge Class based on status -->
+                        <span class="badge status-{{ order.status }}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="price-text">${{ order.total|floatformat:2 }}</td>
+                    <td><span class="item-count">{{ order.items.count }} items</span></td>
+                    <td>
+                        <a href="{% url 'order_detail' order.pk %}" style="color:var(--primary);font-weight:700;text-decoration:none">View</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        No transactions yet. Time to make some bread!
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

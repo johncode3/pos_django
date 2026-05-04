@@ -1,0 +1,243 @@
+<!-- sales/templates/sales/product_list.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛒 POS — Inventory</title>
+    <style>
+        /* Shared CSS Variables - Exact same as Order List */
+        :root {
+            --bg: #f8fafc;
+            --primary: #3182ce;
+            --text-dark: #1a202c;
+            --success: #38a169;
+            --danger: #e53e3e;
+            --warning: #dd6b20;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; max-width: 1000px; margin: 40px auto; padding: 0 20px; background: var(--bg); color: var(--text-dark); }
+        h1 { display: flex; align-items: center; gap: 10px; }
+
+        /* Shared Nav Style */
+        nav { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        nav a { margin-right: 20px; text-decoration: none; color: var(--primary); font-weight: 600; }
+
+        /* Shared Table Container */
+        .table-container { 
+            background: white; 
+            border-radius: 15px; 
+            overflow: hidden; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+            border: 1px solid #e2e8f0;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f1f5f9; color: #64748b; font-size: 0.85em; text-transform: uppercase; letter-spacing: 1px; padding: 15px 20px; text-align: left; }
+        td { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; transition: 0.2s; }
+        
+        tr:hover td { background: #f8fafc; cursor: pointer; }
+
+        /* Category Badge - Matching the Order Status style */
+        .badge { 
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            font-size: 0.75em; 
+            font-weight: bold; 
+            background: #edf2f7; 
+            color: #4a5568;
+            text-transform: uppercase;
+        }
+
+        .price-text { font-weight: 800; color: var(--success); font-family: monospace; font-size: 1.1em; }
+        
+        /* Stock Logic Colors */
+        .low-stock { color: var(--danger); font-weight: bold; background: #fff5f5; padding: 2px 6px; border-radius: 4px; }
+        .out-of-stock { color: #a0aec0; text-decoration: line-through; }
+
+        .empty-state { text-align: center; padding: 50px; color: #a0aec0; }
+        
+        /* Link styling inside table */
+        .product-link { text-decoration: none; color: var(--text-dark); font-weight: 600; }
+        .product-link:hover { color: var(--primary); }
+
+        .search-input {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e0;
+            width: 320px;
+        }
+
+        .hidden-row {
+            display: none;
+        }
+                .btn-new-order {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(49, 130, 206, 0.2);
+            transition: 0.2s;
+            display: inline-block;
+                    margin: 0;
+                }
+                .toolbar { display:flex; gap:12px; align-items:center }
+                .btn-new-order:hover {
+            background-color: #2b6cb0;
+            transform: translateY(-2px);
+        }
+                .edit-link { display:inline-block; margin-top:6px; padding:6px 10px; background:#eef2ff; border-radius:6px; color:#3182ce; text-decoration:none; font-size:0.85em }
+    </style>
+</head>
+<body>
+    <h1>🛒 Inventory Management</h1>
+    
+    <nav>
+        <a href="{% url 'product_list' %}">Inventory</a>
+        <a href="{% url 'order_list' %}">Sales History</a>
+        <a href="{% url 'my_orders' %}">My Orders</a>
+        <a href="/admin/">Admin Dashboard</a>
+        <span style="float:right">
+            👤 {{ request.user.username }}
+            <form method="post" action="/accounts/logout/" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" style="background:none;border:none;color:#2b6cb0;cursor:pointer;padding:0;font-size:1em">
+                    Log Out
+                </button>
+    </nav>
+    <!-- Live Search Input -->
+    <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
+        <input
+            id="liveSearchInput"
+            type="text"
+            name="q"
+            placeholder="Search for a product..."
+            value="{{ request.GET.q }}"
+            class="search-input"
+        >
+        <button
+            id="clearSearchBtn"
+            type="button"
+            style="padding: 10px 20px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 8px; cursor: pointer;"
+        >
+            Clear
+        </button>
+        <div style="margin-left:auto;" class="toolbar">
+            <a href="{% url 'add_product' %}" class="btn-new-order" style="background:#38a169">+ Add Product</a>
+            <!-- The Magic Link! Notice we use the Django URL tag -->
+            <a href="{% url 'create_order' %}" class="btn-new-order">+ New Order</a>
+        </div>
+    </div>
+    
+    <p style="color: #718096; margin-bottom: 20px;">
+        Tracking <b>{{ products.count }}</b> active products in stock
+    </p>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <!-- Image column for thumbnails -->
+                    <th style="width:72px">Image</th>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock Level</th>
+                    <th>Barcode</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for product in products %}
+                <tr class="product-row" data-search-text="{{ product.name|lower }} {{ product.get_category_display|lower }} {{ product.barcode|default:''|lower }}">
+                    <!-- <td><code style="color: #a0aec0;">#{{ product.pk }}</code></td> -->
+                    <td style="width:72px">
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid #edf2f7">
+                        {% else %}
+                        <div style="width:64px;height:64px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-weight:700">IMG</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'product_detail' product.pk %}" class="product-link">
+                            {{ product.name }}
+                        </a>
+                        <div style="margin-top:6px">
+                            <a href="{% url 'edit_product' product.pk %}" class="edit-link">Edit</a>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge">{{ product.get_category_display }}</span>
+                    </td>
+                    <td class="price-text">${{ product.price|floatformat:2 }}</td>
+                    <td>
+                        {% if product.stock <= 5 %}
+                            <span class="low-stock"> {{ product.stock }} left</span>
+                        {% elif product.stock == 0 %}
+                            <span class="out-of-stock">Sold Out</span>
+                        {% else %}
+                            <span style="color: #718096;">{{ product.stock }} in stock</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <small style="color: #cbd5e0; font-family: monospace;">
+                            {{ product.barcode|default:"---" }}
+                        </small>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr id="noProductsRow">
+                    <td colspan="6" class="empty-state">
+                        Your warehouse is empty! <br>Add products in the admin panel.
+                    </td>
+                </tr>
+            {% endfor %}
+                <tr id="noSearchResultsRow" class="hidden-row">
+                    <td colspan="6" class="empty-state">
+                        No products match your search.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('liveSearchInput');
+        const clearBtn = document.getElementById('clearSearchBtn');
+        const productRows = document.querySelectorAll('.product-row');
+        const noSearchResultsRow = document.getElementById('noSearchResultsRow');
+
+        function filterProducts() {
+            const term = searchInput.value.trim().toLowerCase();
+            let visibleCount = 0;
+
+            productRows.forEach((row) => {
+                const searchableText = row.getAttribute('data-search-text') || '';
+                const isMatch = searchableText.includes(term);
+                row.classList.toggle('hidden-row', !isMatch);
+                if (isMatch) {
+                    visibleCount += 1;
+                }
+            });
+
+            if (noSearchResultsRow) {
+                noSearchResultsRow.classList.toggle('hidden-row', visibleCount !== 0 || term === '');
+            }
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', filterProducts);
+            filterProducts();
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                filterProducts();
+                searchInput.focus();
+            });
+        }
+    </script>
+</body>
+</html>

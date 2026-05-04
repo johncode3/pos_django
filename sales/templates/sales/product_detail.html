@@ -1,0 +1,105 @@
+<!-- sales/templates/sales/product_detail.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }} — Details</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --primary: #3182ce;
+            --text-dark: #1a202c;
+            --success: #38a169;
+            --danger: #e53e3e;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text-dark); margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+
+        .detail-card { 
+            background: white; 
+            width: 100%; 
+            max-width: 500px; 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); 
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .badge { 
+            padding: 5px 15px; 
+            border-radius: 20px; 
+            font-size: 0.8em; 
+            font-weight: bold; 
+            background: #ebf8ff; 
+            color: var(--primary); 
+            text-transform: uppercase;
+        }
+
+        h1 { margin: 20px 0 10px 0; font-size: 2.2em; }
+        
+        .price { font-size: 2em; font-weight: 800; color: var(--success); margin: 10px 0; }
+        
+        .info-grid { text-align: left; margin: 30px 0; border-top: 1px solid #edf2f7; padding-top: 20px; }
+        .info-item { margin-bottom: 15px; display: flex; justify-content: space-between; }
+        .label { color: #718096; font-weight: 600; }
+        
+        /* Low Stock Warning Box */
+        .warning-box { 
+            background: #fff5f5; 
+            color: var(--danger); 
+            padding: 15px; 
+            border-radius: 12px; 
+            font-weight: bold; 
+            border: 1px solid #feb2b2;
+            margin-bottom: 20px;
+        }
+
+        .back-link { 
+            display: inline-block; 
+            margin-top: 20px; 
+            text-decoration: none; 
+            color: var(--primary); 
+            font-weight: bold; 
+            transition: 0.2s;
+        }
+        .back-link:hover { transform: translateX(-5px); }
+    </style>
+</head>
+<body>
+
+<div class="detail-card">
+    <span class="badge">{{ product.get_category_display }}</span>
+    {% if product.image %}
+    <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width:200px;height:200px;object-fit:cover;border-radius:12px;margin:10px auto;display:block;">
+    {% endif %}
+    <h1>{{ product.name }}</h1>
+    <div class="price">${{ product.price|floatformat:2 }}</div>
+
+    <div class="info-grid">
+        <div class="info-item">
+            <span class="label">Barcode:</span>
+            <span><code>{{ product.barcode|default:"No Barcode" }}</code></span>
+        </div>
+        <div class="info-item">
+            <span class="label">Stock Level:</span>
+            <span>{{ product.stock }} units</span>
+        </div>
+    </div>
+
+    <!-- The "Magic If" for Low Stock Warning -->
+    {% if product.stock < 10 %}
+    <div class="warning-box">
+        ALERT: Stock is low! Please restock soon.
+    </div>
+    {% endif %}
+
+    <a href="{% url 'product_list' %}" class="back-link">
+        ← Back to products
+    </a>
+    <a href="{% url 'edit_product' product.pk %}" class="edit-link" style="margin-left:16px">Edit Product</a>
+</div>
+
+</body>
+</html>
