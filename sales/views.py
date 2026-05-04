@@ -3,8 +3,8 @@
 # 1️⃣ ADDED 'redirect' right here! 👇
 from django.shortcuts import render, get_object_or_404, redirect
 
-from .models import Product, Order, OrderItem
-from .forms import OrderItemForm, RegisterForm, ProductForm
+from .models import Product, Order, OrderItem, Discount
+from .forms import OrderItemForm, RegisterForm, ProductForm, DiscountForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
@@ -63,6 +63,31 @@ def add_item(request, pk):
         return redirect('order_detail', pk=order.pk)
 
     if request.method == 'POST':
+        # Apply or update discount
+        if 'apply_discount' in request.POST:
+            discount_form = DiscountForm(request.POST)
+            if discount_form.is_valid():
+                # Delete old discount if exists
+                if hasattr(order, 'discount'):
+                    order.discount.delete()
+                # Create new discount
+                discount = discount_form.save(commit=False)
+                discount.order = order
+                discount.save()
+                messages.success(request, f"✓ Discount applied: {discount.description}")
+                return redirect('add_item', pk=order.pk)
+            else:
+                for field, errs in discount_form.errors.items():
+                    for error in errs:
+                        messages.error(request, f"{error}")
+        
+        # Remove discount
+        if 'remove_discount' in request.POST:
+            if hasattr(order, 'discount'):
+                order.discount.delete()
+                messages.success(request, "✓ Discount removed")
+            return redirect('add_item', pk=order.pk)
+
         # "Mark as Paid" button
         if 'mark_paid' in request.POST:
             order.status = 'paid'
@@ -76,10 +101,12 @@ def add_item(request, pk):
                 item = order.items.get(pk=item_id)
             except OrderItem.DoesNotExist:
                 messages.error(request, 'Item not found.')
-                return redirect('add_item', pk=order.pk)
+        discount_form = DiscountForm()
 
-            # restore stock
-            product = item.product
+    return render(request, 'sales/add_order.html', {
+        'order':     order,
+        'item_form': item_form,
+        'discount_form': discountm.product
             product.stock = (product.stock or 0) + item.quantity
             product.save()
             item.delete()

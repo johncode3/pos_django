@@ -2,7 +2,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Order, OrderItem
+from .models import Order, OrderItem, Discount
 from .models import Product
 # Form for adding a product to an order (used in add_item view)
 class OrderItemForm(forms.ModelForm):
@@ -49,6 +49,15 @@ class RegisterForm(UserCreationForm):
         self.fields['password1'].widget.attrs.update({'class': 'form-input', 'placeholder': 'Create a password'})
         self.fields['password2'].widget.attrs.update({'class': 'form-input', 'placeholder': 'Confirm your password'})
 
+
+class DiscountForm(forms.ModelForm):
+    class Meta:
+        model = Discount
+        fields = ['description', 'amount']
+        widgets = {
+            'description': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'e.g., Staff discount, 10% off'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01', 'placeholder': 'Discount amount'}),
+        }
 
 class ProductForm(forms.ModelForm):
     class Meta:

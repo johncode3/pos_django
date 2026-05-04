@@ -106,6 +106,39 @@
     </table>
     <p class="total">Order Total: ${{ order.total }}</p>
 
+    <!-- Discount Section -->
+    {% if order.discount %}
+    <div style="background:#f0fdf4;padding:16px;border-radius:8px;border-left:4px solid #22c55e;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+                <div style="font-weight:600;color:#16a34a">💰 Discount Applied</div>
+                <div style="color:#4b5563;font-size:0.95em;margin-top:4px">{{ order.discount.description }}</div>
+                <div style="color:#059669;font-weight:700;margin-top:4px">-${{ order.discount.amount|floatformat:2 }}</div>
+            </div>
+            <form method="post" style="display:inline">
+                {% csrf_token %}
+                <button class="btn" name="remove_discount" type="submit" style="background:linear-gradient(180deg,#dc2626,#b91c1c);padding:8px 12px;border-radius:6px;font-size:0.9em">✖ Remove</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <!-- Apply Discount Form -->
+    <div style="background:#f8fafc;padding:16px;border-radius:8px;border:1px dashed #cbd5e0;margin-bottom:20px">
+        <form method="post" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+            {% csrf_token %}
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:6px;font-size:0.95em">Description</label>
+                {{ discount_form.description }}
+            </div>
+            <div>
+                <label style="font-weight:600;display:block;margin-bottom:6px;font-size:0.95em">Amount ($)</label>
+                {{ discount_form.amount }}
+            </div>
+            <button class="btn" name="apply_discount" type="submit" style="background:linear-gradient(180deg,#059669,#047857);padding:10px 16px">💰 Apply Discount</button>
+        </form>
+    </div>
+    {% endif %}
+
     <!-- Add item form -->
     <form class="add" method="post">
         {% csrf_token %}
